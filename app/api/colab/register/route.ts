@@ -23,6 +23,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'URL inválida.' }, { status: 400 });
   }
 
-  await saveRegistration(url);
+  try {
+    await saveRegistration(url);
+  } catch (e) {
+    return NextResponse.json({ error: 'Falha ao gravar no Redis: ' + (e as Error).message }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }
