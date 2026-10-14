@@ -52,6 +52,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const videoPreview = useObjectUrl(video);
   const photoPreview = useObjectUrl(photo);
+  const [reason, setReason] = useState('');
 
   // silent = true não mostra "Verificando..." (usado no polling)
   async function checkServer(silent = false) {
@@ -60,8 +61,10 @@ export default function Home() {
       const r = await fetch('/api/status', { cache: 'no-store' });
       const d = await r.json();
       setServer(d.online ? 'online' : 'offline');
+      setReason(d.reason ? d.reason + (d.detail ? ': ' + d.detail : '') : '');
     } catch {
       setServer('offline');
+      setReason('falha ao consultar /api/status');
     }
   }
 
@@ -170,6 +173,7 @@ export default function Home() {
             automaticamente.
           </p>
           <button className="btn" onClick={() => checkServer()}>Verificar agora</button>
+          {reason && <small className="muted">Diagnóstico: {reason}</small>}
         </div>
       )}
 
