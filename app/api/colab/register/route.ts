@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   try {
     await saveRegistration(url);
   } catch (e) {
-    return NextResponse.json({ error: 'Falha ao gravar no Redis: ' + (e as Error).message }, { status: 500 });
+    return NextResponse.json({ error: 'Falha ao gravar o registro: ' + (e as Error).message }, { status: 500 });
   }
   return NextResponse.json({ ok: true });
 }

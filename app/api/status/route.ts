@@ -8,7 +8,7 @@ export async function GET() {
   try {
     reg = await getRegistration();
   } catch (e) {
-    return NextResponse.json({ online: false, reason: 'redis', detail: (e as Error).message });
+    return NextResponse.json({ online: false, reason: 'registro', detail: (e as Error).message });
   }
   if (!reg) return NextResponse.json({ online: false, reason: 'sem_registro' });
 

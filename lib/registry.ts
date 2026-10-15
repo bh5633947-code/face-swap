@@ -1,24 +1,11 @@
-import { Redis } from '@upstash/redis';
+import { put, list } from '@vercel/blob';
 
-const KEY = 'colab:current';
+// Registro do Colab guardado no Vercel Blob (sem Redis).
+// Um único arquivo JSON é sobrescrito a cada heartbeat.
+const PATH = 'registry/colab.json';
 export const MAX_AGE_MS = 5 * 60 * 1000;
 
 export type Registration = { url: string; lastSeen: number };
-
-export function redisConfig() {
-  return {
-    url: process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || '',
-    token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || '',
-  };
-}
-
-function redis() {
-  const { url, token } = redisConfig();
-  if (!url || !token) {
-    throw new Error('Upstash não conectado. Vercel → Storage → Upstash → Connect ao projeto, depois Redeploy.');
-  }
-  return new Redis({ url, token });
-}
 
 // Aceita só https://algo.gradio.live (sem caminho)
 export function isGradioShareUrl(value: string): boolean {
@@ -32,13 +19,22 @@ export function isGradioShareUrl(value: string): boolean {
 
 export async function saveRegistration(url: string) {
   const reg: Registration = { url, lastSeen: Date.now() };
-  await redis().set(KEY, reg);
+  await put(PATH, JSON.stringify(reg), {
+    access: 'public',
+    contentType: 'application/json',
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    cacheControlMaxAge: 60,
+  });
 }
 
 export async function getRegistration(): Promise<Registration | null> {
-  const raw = await redis().get<Registration | string>(KEY);
-  if (!raw) return null;
-  return typeof raw === 'string' ? (JSON.parse(raw) as Registration) : raw;
+  const { blobs } = await list({ prefix: PATH });
+  const blob = blobs.find((b) => b.pathname === PATH);
+  if (!blob) return null;
+  const res = await fetch(blob.url, { cache: 'no-store' });
+  if (!res.ok) return null;
+  return (await res.json()) as Registration;
 }
 
 export async function getActiveUrl(): Promise<string | null> {
