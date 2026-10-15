@@ -1,6 +1,6 @@
-import { put, list } from '@vercel/blob';
+import { put, list, get } from '@vercel/blob';
 
-// Registro do Colab guardado no Vercel Blob (sem Redis).
+// Registro do Colab guardado no Vercel Blob PRIVADO (sem Redis).
 // Um único arquivo JSON é sobrescrito a cada heartbeat.
 const PATH = 'registry/colab.json';
 export const MAX_AGE_MS = 5 * 60 * 1000;
@@ -20,21 +20,18 @@ export function isGradioShareUrl(value: string): boolean {
 export async function saveRegistration(url: string) {
   const reg: Registration = { url, lastSeen: Date.now() };
   await put(PATH, JSON.stringify(reg), {
-    access: 'public',
+    access: 'private',
     contentType: 'application/json',
     addRandomSuffix: false,
     allowOverwrite: true,
-    cacheControlMaxAge: 60,
   });
 }
 
 export async function getRegistration(): Promise<Registration | null> {
-  const { blobs } = await list({ prefix: PATH });
-  const blob = blobs.find((b) => b.pathname === PATH);
-  if (!blob) return null;
-  const res = await fetch(blob.url, { cache: 'no-store' });
-  if (!res.ok) return null;
-  return (await res.json()) as Registration;
+  const result = await get(PATH, { access: 'private', useCache: false });
+  if (!result || result.statusCode !== 200) return null;
+  const text = await new Response(result.stream).text();
+  return JSON.parse(text) as Registration;
 }
 
 export async function getActiveUrl(): Promise<string | null> {
