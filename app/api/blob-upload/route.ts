@@ -13,6 +13,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           'image/jpeg', 'image/png', 'image/webp',
         ],
         maximumSizeInBytes: 100 * 1024 * 1024,
+        addRandomSuffix: true,
       }),
       onUploadCompleted: async () => {},
     });

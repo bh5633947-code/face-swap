@@ -129,7 +129,6 @@ export default function Home() {
       const opts = {
         access: 'public' as const,
         handleUploadUrl: '/api/blob-upload',
-        addRandomSuffix: true,
       };
       const [v, p] = await Promise.all([
         upload(`inputs/${video.name}`, video, opts),
