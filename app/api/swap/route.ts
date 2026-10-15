@@ -60,7 +60,7 @@ export async function POST(req: Request) {
   try {
     const client = await Client.connect(gradioUrl);
     const result = await client.predict('/swap', [
-      handle_file(videoUrl),
+      { video: handle_file(videoUrl) },
       handle_file(photoUrl),
       token,
     ]);
